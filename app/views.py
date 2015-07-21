@@ -1,37 +1,117 @@
 __author__ = 'Piellia Vasyl'
 
-from flask import render_template, flash, redirect
-from app import app
+from flask.ext.login import login_user, logout_user, current_user, login_required
+from flask import render_template, flash, redirect, session, url_for, request, g
+from app import app, db, lm
 from .forms import LoginForm
+from models import User, ROLE_USER, ROLE_ADMIN
 
 
-@app.route('/login', methods = ['GET', 'POST'])
+#@app.route('/login', methods = ['GET', 'POST'])
+#@oid.loginhandler
+#def login():
+#  if g.user is not None and g.user.is_authenticated():
+#      return redirect(url_for('index'))
+#  form = LoginForm()
+#  if form.validate_on_submit():
+#      session['remember_me'] = form.remember_me.data
+#      return oid.try_login(form.openid.data, ask_for = ['nickname', 'email'])
+#  return render_template('login.html',
+#      title = 'Sign In',
+#      form = form,
+#      providers = app.config['OPENID_PROVIDERS'])
+
+#@oid.after_login
+#def after_login(resp):
+#    if resp.email is None or resp.email == "":
+#        flash('Invalid login. Please try again.')
+#        return redirect(url_for('login'))
+#    user = User.query.filter_by(email = resp.email).first()
+#    if user is None:
+#        nickname = resp.nickname
+#        if nickname is None or nickname == "":
+#            nickname = resp.email.split('@')[0]
+#        user = User(nickname = nickname, email = resp.email, role = ROLE_USER)
+#        db.session.add(user)
+#        db.session.commit()
+#    remember_me = False
+#    if 'remember_me' in session:
+#        remember_me = session['remember_me']
+#        session.pop('remember_me', None)
+#    login_user(user, remember = remember_me)
+#    return redirect(request.args.get('next') or url_for('index'))
+
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'GET':
+        return render_template('register.html')
+    user = User(request.form['username'], request.form['password'], request.form['email'])
+    if user.username in db.session.query(User.username).all():
+        flash('This user name already exists.')
+        return redirect(url_for('register'))
+    if user.email in db.session.query(User.email).all():
+        flash('This email already exists.')
+        return redirect(url_for('register'))
+    db.session.add(user)
+    db.session.commit()
+    flash('User successfully registered')
+    return redirect(url_for('login'))
+
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        flash('Login requested for OpenID="' + form.openid.data + '", remember_me=' + str(form.remember_me.data))
-        return redirect('/index')
-    return render_template('login.html',
-        title = 'Sign In',
-        form = form,
-        providers = app.config['OPENID_PROVIDERS'])
+    if request.method == 'GET':
+        form = LoginForm()
+        return render_template('login.html', form=form)
+
+    username = request.form['username']
+    password = request.form['password']
+    remember_me = False
+    if 'remember_me' in request.form:
+        remember_me = True
+    registered_user = db.session.query(User).filter_by(username=username, password=password).first()
+    if registered_user is None:
+        flash('Username or Password is invalid', 'error')
+        return redirect(url_for('login'))
+    login_user(registered_user, remember=remember_me)
+    flash('Logged in successfully')
+    return redirect(request.args.get('next') or url_for('index'))
+
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    flash("You have successfully logged out!")
+    return redirect(url_for('index'))
+
+
+@lm.user_loader
+def load_user(id):
+    return db.session.query(User).get(int(id))
+
+
+@app.before_request
+def before_request():
+    g.user = current_user
 
 
 @app.route('/')
 @app.route('/index')
 def index():
-    user = {'nickname': 'Miguel'}  # fake user
-    posts = [  # fake array of posts
+    user = g.user
+    posts = [
         {
-            'author': {'nickname': 'John'},
+            'author': { 'username': 'John' },
             'body': 'Beautiful day in Portland!'
         },
         {
-            'author': {'nickname': 'Susan'},
+            'author': { 'username': 'Susan' },
             'body': 'The Avengers movie was so cool!'
         }
     ]
-    return render_template("index.html",
+    return render_template('index.html',
                            title='Home',
                            user=user,
                            posts=posts)
