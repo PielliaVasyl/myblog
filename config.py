@@ -18,3 +18,6 @@ MAIL_PASSWORD = None
 
 # administrator list
 ADMINS = ['pellia@ukr.net']
+
+# pagination
+POSTS_PER_PAGE = 3
