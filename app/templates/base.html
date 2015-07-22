@@ -28,6 +28,7 @@ body {
                 {% if g.user.is_authenticated()%}
                     <li><a href="/index">Home</a></li>
                     <li><a href="{{ url_for('user', username = g.user.username) }}">Your Profile</a></li>
+					<li style="margin-top:5px;"><form style="display: inline;margin-top:5px" action="{{url_for('search')}}" method="post" name="search" >{{g.search_form.hidden_tag()}}{{g.search_form.search(size=20)}}<input type="submit" value="Search"></form></li>
                     <li><a href="{{ url_for('logout') }}">Logout</a></li>
                 {% endif %}
                 {% if not g.user.is_authenticated()%}

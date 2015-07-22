@@ -1,9 +1,10 @@
 from datetime import datetime
+import flask.ext.whooshalchemy as whooshalchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
 __author__ = 'Piellia Vasyl'
 
-from app import db
+from app import db, app
 from hashlib import md5
 
 ROLE_USER = 0
@@ -90,6 +91,8 @@ class User(db.Model):
         return '<User %r>' % (self.username)
 
 class Post(db.Model):
+    __searchable__ = ['body']
+
     id = db.Column(db.Integer, primary_key = True)
     body = db.Column(db.String(140))
     timestamp = db.Column(db.DateTime)
@@ -97,3 +100,5 @@ class Post(db.Model):
 
     def __repr__(self):
         return '<Post %r>' % (self.body)
+
+whooshalchemy.whoosh_index(app, Post)
