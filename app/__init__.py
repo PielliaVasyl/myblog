@@ -1,3 +1,4 @@
+from app.momentjs import momentjs
 from flask.ext.mail import Mail
 
 __author__ = 'Piellia Vasyl'
@@ -14,6 +15,8 @@ lm = LoginManager()
 lm.init_app(app)
 lm.login_view = 'login'
 mail = Mail(app)
+
+app.jinja_env.globals['momentjs'] = momentjs
 
 from app import views, models
 
