@@ -1,3 +1,5 @@
+from flask.ext.mail import Mail
+
 __author__ = 'Piellia Vasyl'
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -11,6 +13,7 @@ db = SQLAlchemy(app)
 lm = LoginManager()
 lm.init_app(app)
 lm.login_view = 'login'
+mail = Mail(app)
 
 from app import views, models
 

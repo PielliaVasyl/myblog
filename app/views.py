@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.emails import follower_notification
 
 __author__ = 'Piellia Vasyl'
 
@@ -165,6 +166,7 @@ def follow(username):
     db.session.add(u)
     db.session.commit()
     flash('You are now following ' + username + '!')
+    follower_notification(user, g.user)
     return redirect(url_for('user', username=username))
 
 
